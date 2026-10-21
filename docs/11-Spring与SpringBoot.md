@@ -39,37 +39,39 @@ Spring 相关的题有一个明显特征：**背结论的人和用过的人，�
 
 ## 三、高频面试题清单
 
-| 编号 | 题目 | 难度 | 优先级 | 一句话答案 |
-| --- | --- | --- | --- | --- |
-| Q1 | IoC 与 DI 的本质是什么？控制反转反转了什么？ | 初级 | P0 | 反转的是依赖的获取权，由对象主动 new 变为容器注入，代价是装配错误延迟到运行期 |
-| Q2 | Bean 的完整生命周期是怎样的？各扩展点用在哪？ | 中级 | P0 | 实例化 → 属性填充 → Aware → 前置处理 → 初始化 → 后置处理（此处生成代理）→ 使用 → 销毁 |
-| Q3 | 三级缓存各存什么？为什么需要三级而不是两级？ | 高级 | P0 | 一级存成品、二级存早期引用、三级存对象工厂，第三级是为了把 AOP 代理延迟到真正发生循环时 |
-| Q4 | 构造器注入为什么解决不了循环依赖？ | 中级 | P1 | 实例化都完不成，没有对象可提前暴露；Boot 2.6 起默认直接禁止循环依赖 |
-| Q5 | BeanFactory、FactoryBean、ApplicationContext 有什么区别？ | 中级 | P1 | 前者是容器底座，中者是"生产 Bean 的 Bean"，后者是带企业级能力的容器 |
-| Q6 | `refresh()` 的十二步分别做什么？ | 高级 | P1 | 准备环境 → 建工厂 → 执行后置处理器 → 注册处理器 → 初始化事件与消息源 → 启容器 → 实例化单例 → 完成刷新 |
-| Q7 | `@Autowired` 与 `@Resource` 有什么区别？ | 初级 | P0 | 前者 Spring 的 byType（可配 `@Qualifier`），后者 JSR-250 的 byName 优先 |
-| Q8 | AOP 的织入时机？JDK 代理与 CGLIB 怎么选？ | 中级 | P0 | Spring AOP 是运行期织入；有接口用 JDK，Boot 2.x 起默认统一 CGLIB |
-| Q9 | 多个切面作用于同一方法，执行顺序如何确定？ | 中级 | P1 | `@Order` 越小越外层，before 升序、after 降序，形成栈式结构 |
-| Q10 | AOP 有哪些失效场景？为什么自调用不走代理？ | 中级 | P1 | 自调用用的是 `this`，绕过了代理对象；`private`/`final`/非 Bean 同样失效 |
-| Q11 | `@Transactional` 的实现原理是什么？ | 中级 | P0 | 本质是 AOP + `TransactionInterceptor`，在方法前后包了开启、提交、回滚 |
-| Q12 | 七种事务传播行为分别是什么？ | 高级 | P0 | 默认 `REQUIRED`；`REQUIRES_NEW` 挂起外层新开事务，`NESTED` 用保存点 |
-| Q13 | 事务在哪些情况下会失效？ | 中级 | P1 | 自调用、非 public、异常被吞、checked 异常未配 `rollbackFor`、传播行为不当等 |
-| Q14 | 事务与锁有哪些常见坑？ | 高级 | P1 | 事务未提交锁不释放、长事务、异步丢上下文、事务内调远程服务无法回滚 |
-| Q15 | Spring MVC 一次请求的完整流程？ | 中级 | P0 | `DispatcherServlet` 取 handler → 找适配器 → 解析参数 → 调 Controller → 处理返回值 → 渲染 |
-| Q16 | 过滤器、拦截器、AOP 有什么区别？执行顺序如何？ | 中级 | P1 | Filter 在容器层，Interceptor 在 MVC 层能拿 handler，AOP 在 Bean 方法层 |
-| Q17 | `@RequestBody`、`@RequestParam`、`@PathVariable` 怎么区分？全局异常怎么处理？ | 初级 | P1 | 分别取请求体、查询参数、路径变量；`@RestControllerAdvice` 统一兜底 |
-| Q18 | Spring Boot 自动配置的原理是什么？ | 中级 | P0 | `@EnableAutoConfiguration` 导入选择器，读 imports 清单，再用条件注解按需装配 |
-| Q19 | 如何自定义一个 starter？命名有什么规范？ | 中级 | P1 | autoconfigure 模块写配置类并注册 imports，starter 模块只做依赖聚合 |
-| Q20 | Spring Boot 的启动流程主干是什么？ | 中级 | P1 | 推断应用类型 → 准备环境 → 建容器 → `refresh` → 启动内嵌容器 → 执行 Runner |
-| Q21 | 配置优先级、Profile、`@ConfigurationProperties` 与 `@Value` 的差异？ | 初级 | P2 | 命令行最高、默认属性最低；`@ConfigurationProperties` 支持批量与宽松绑定 |
-| Q22 | 单例 Bean 是线程安全的吗？ | 中级 | P1 | 容器不保证，无状态 Bean 天然安全，有可变成员变量就有并发问题 |
-| Q23 | Spring 里用到了哪些设计模式？ | 中级 | P2 | 工厂、单例、代理、模板方法、观察者、策略、适配器、装饰器、责任链 |
-| Q24 | Spring 6 与 Spring Boot 3 有哪些关键变化？ | 高级 | P2 | JDK 17 基线、`javax` 换 `jakarta`、AOT 与 native image、Observability |
-| Q25 | 启动失败常见原因怎么排查？ | 中级 | P2 | Bean 冲突、循环依赖、配置缺失、端口占用、数据源未配置五类占多数 |
+| 编号 | 题目 | 面试难度 | 阅读门槛 | 优先级 | 一句话答案 |
+| --- | --- | --- | --- | --- | --- |
+| Q1 | IoC 与 DI 的本质是什么？控制反转反转了什么？ | 初级 | 低 | P0 | 反转的是依赖的获取权，由对象主动 new 变为容器注入，代价是装配错误延迟到运行期 |
+| Q2 | Bean 的完整生命周期是怎样的？各扩展点用在哪？ | 中级 | 中 | P0 | 实例化 → 属性填充 → Aware → 前置处理 → 初始化 → 后置处理（此处生成代理）→ 使用 → 销毁 |
+| Q3 | 三级缓存各存什么？为什么需要三级而不是两级？ | 高级 | 高 | P0 | 一级存成品、二级存早期引用、三级存对象工厂，第三级是为了把 AOP 代理延迟到真正发生循环时 |
+| Q4 | 构造器注入为什么解决不了循环依赖？ | 中级 | 中 | P1 | 实例化都完不成，没有对象可提前暴露；Boot 2.6 起默认直接禁止循环依赖 |
+| Q5 | BeanFactory、FactoryBean、ApplicationContext 有什么区别？ | 中级 | 中 | P1 | 前者是容器底座，中者是"生产 Bean 的 Bean"，后者是带企业级能力的容器 |
+| Q6 | `refresh()` 的十二步分别做什么？ | 高级 | 高 | P1 | 准备环境 → 建工厂 → 执行后置处理器 → 注册处理器 → 初始化事件与消息源 → 启容器 → 实例化单例 → 完成刷新 |
+| Q7 | `@Autowired` 与 `@Resource` 有什么区别？ | 初级 | 低 | P0 | 前者 Spring 的 byType（可配 `@Qualifier`），后者 JSR-250 的 byName 优先 |
+| Q8 | AOP 的织入时机？JDK 代理与 CGLIB 怎么选？ | 中级 | 中 | P0 | Spring AOP 是运行期织入；有接口用 JDK，Boot 2.x 起默认统一 CGLIB |
+| Q9 | 多个切面作用于同一方法，执行顺序如何确定？ | 中级 | 中 | P1 | `@Order` 越小越外层，before 升序、after 降序，形成栈式结构 |
+| Q10 | AOP 有哪些失效场景？为什么自调用不走代理？ | 中级 | 中 | P1 | 自调用用的是 `this`，绕过了代理对象；`private`/`final`/非 Bean 同样失效 |
+| Q11 | `@Transactional` 的实现原理是什么？ | 中级 | 中 | P0 | 本质是 AOP + `TransactionInterceptor`，在方法前后包了开启、提交、回滚 |
+| Q12 | 七种事务传播行为分别是什么？ | 高级 | 高 | P0 | 默认 `REQUIRED`；`REQUIRES_NEW` 挂起外层新开事务，`NESTED` 用保存点 |
+| Q13 | 事务在哪些情况下会失效？ | 中级 | 中 | P1 | 自调用、非 public、异常被吞、checked 异常未配 `rollbackFor`、传播行为不当等 |
+| Q14 | 事务与锁有哪些常见坑？ | 高级 | 高 | P1 | 事务未提交锁不释放、长事务、异步丢上下文、事务内调远程服务无法回滚 |
+| Q15 | Spring MVC 一次请求的完整流程？ | 中级 | 中 | P0 | `DispatcherServlet` 取 handler → 找适配器 → 解析参数 → 调 Controller → 处理返回值 → 渲染 |
+| Q16 | 过滤器、拦截器、AOP 有什么区别？执行顺序如何？ | 中级 | 中 | P1 | Filter 在容器层，Interceptor 在 MVC 层能拿 handler，AOP 在 Bean 方法层 |
+| Q17 | `@RequestBody`、`@RequestParam`、`@PathVariable` 怎么区分？全局异常怎么处理？ | 初级 | 低 | P1 | 分别取请求体、查询参数、路径变量；`@RestControllerAdvice` 统一兜底 |
+| Q18 | Spring Boot 自动配置的原理是什么？ | 中级 | 中 | P0 | `@EnableAutoConfiguration` 导入选择器，读 imports 清单，再用条件注解按需装配 |
+| Q19 | 如何自定义一个 starter？命名有什么规范？ | 中级 | 中 | P1 | autoconfigure 模块写配置类并注册 imports，starter 模块只做依赖聚合 |
+| Q20 | Spring Boot 的启动流程主干是什么？ | 中级 | 中 | P1 | 推断应用类型 → 准备环境 → 建容器 → `refresh` → 启动内嵌容器 → 执行 Runner |
+| Q21 | 配置优先级、Profile、`@ConfigurationProperties` 与 `@Value` 的差异？ | 初级 | 低 | P2 | 命令行最高、默认属性最低；`@ConfigurationProperties` 支持批量与宽松绑定 |
+| Q22 | 单例 Bean 是线程安全的吗？ | 中级 | 中 | P1 | 容器不保证，无状态 Bean 天然安全，有可变成员变量就有并发问题 |
+| Q23 | Spring 里用到了哪些设计模式？ | 中级 | 中 | P2 | 工厂、单例、代理、模板方法、观察者、策略、适配器、装饰器、责任链 |
+| Q24 | Spring 6 与 Spring Boot 3 有哪些关键变化？ | 高级 | 高 | P2 | JDK 17 基线、`javax` 换 `jakarta`、AOT 与 native image、Observability |
+| Q25 | 启动失败常见原因怎么排查？ | 中级 | 中 | P2 | Bean 冲突、循环依赖、配置缺失、端口占用、数据源未配置五类占多数 |
 
 ## 四、题目详解
 
 ### Q1. IoC 与 DI 的本质是什么？控制反转反转了什么？（初级）
+
+> 前置：控制反转、依赖注入
 
 **一句话结论**：IoC（Inversion of Control，控制反转）反转的是"依赖对象的创建权与查找权"，从对象内部主动 `new` 变成由容器在外部装配；DI（Dependency Injection，依赖注入）是 IoC 的一种实现方式，通过构造器、setter 或字段把依赖传进来。
 
@@ -118,6 +120,8 @@ public class OrderService {
 **加分点**：能补一句"Spring 的 DI 是运行期反射装配，Quarkus/Micronaut 走编译期生成，这就是启动速度差异的根源"，说明你理解两类框架的取舍。
 
 ### Q2. Bean 的完整生命周期是怎样的？各扩展点用在哪？（中级）
+
+> 前置：实例化、初始化、后置处理器
 
 **一句话结论**：主干是"实例化 → 属性填充 → Aware 回调 → `BeanPostProcessor` 前置 → 初始化方法 → `BeanPostProcessor` 后置（AOP 代理在此生成）→ 使用 → 销毁"，其中 `BeanPostProcessor` 是 Spring 留给自己和用户改 Bean 的最强扩展点。
 
@@ -175,6 +179,8 @@ flowchart TD
 **易错点**：很多人把"实例化"和"初始化"混为一谈。实例化只是分配内存、调构造器；初始化是 `afterPropertiesSet` 那一套。`@PostConstruct` 在初始化阶段，不在构造器之后紧挨着——中间隔着属性填充和 Aware 回调。
 
 ### Q3. 三级缓存各存什么？为什么需要三级而不是两级？（高级）
+
+> 前置：循环依赖、AOP 代理
 
 **一句话结论**：`singletonObjects`（一级）存完整 Bean，`earlySingletonObjects`（二级）存提前暴露的早期引用（可能已是代理），`singletonFactories`（三级）存能生产早期引用的 `ObjectFactory`；第三级的存在是为了把"AOP 代理的创建"延迟到真正发生循环依赖时，保证正常 Bean 的代理仍在初始化后生成。
 
@@ -238,6 +244,8 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 
 ### Q4. 构造器注入为什么解决不了循环依赖？Spring Boot 2.6 之后为什么默认禁止？（中级）
 
+> 前置：实例化顺序、Spring Boot 2.6
+
 **一句话结论**：构造器注入要求依赖在实例化时就必须就绪，而循环依赖的双方都还没实例化，没有任何对象可以提前暴露，因此无解；Spring Boot 2.6 起默认关闭循环依赖支持，是因为允许循环依赖会掩盖设计缺陷，且与 AOT、native image 的静态分析冲突。
 
 **先把话说白**：字段注入能解决循环依赖，是因为对象先被造出来（空壳），再填字段，所以"半成品"可以被别人先拿去用。构造器注入则要求"造出来的时候依赖就已经在里面"，A 要造出来必须先有 B，B 要造出来必须先有 A，形成死结，没有任何中间状态可利用。
@@ -269,6 +277,8 @@ protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 - 追问：原型 Bean 的循环依赖呢？→ 答题要点：同样无解且不缓存，Spring 直接抛异常，因为原型没有"提前暴露"的注册表。
 
 ### Q5. BeanFactory、FactoryBean、ApplicationContext 有什么区别？（中级）
+
+> 前置：容器体系、`FactoryBean`
 
 **一句话结论**：`BeanFactory` 是最底层的容器接口，负责 Bean 的定义、创建与获取；`FactoryBean` 是一种特殊的 Bean，用来生产其他 Bean 的实例；`ApplicationContext` 继承 `BeanFactory`，额外提供事件、国际化、资源加载、自动注册后置处理器等企业级能力。
 
@@ -314,6 +324,8 @@ public class OrderFactoryBean implements FactoryBean<OrderClient> {
 - 追问：`ApplicationContext` 是 `BeanFactory` 的子接口，为什么说它是组合？→ 答题要点：接口上是继承，实现上 `AbstractApplicationContext` 内部持有一个 `ConfigurableListableBeanFactory`，大部分方法委托给它。
 
 ### Q6. `refresh()` 的十二步分别做什么？（高级）
+
+> 前置：容器启动、扩展点
 
 **一句话结论**：`refresh()` 是容器启动的总流程，从准备环境、创建 BeanFactory、执行后置处理器、注册 Bean 后置处理器、初始化事件与消息源、启动子容器，到实例化所有单例、发布刷新完成事件，是一条严格有序的流水线。
 
@@ -362,6 +374,8 @@ public class OrderFactoryBean implements FactoryBean<OrderClient> {
 
 ### Q7. `@Autowired` 与 `@Resource` 有什么区别？（初级）
 
+> 前置：注入方式、按类型与按名称
+
 **一句话结论**：`@Autowired` 是 Spring 提供的注解，默认按类型（byType）注入，可用 `@Qualifier` 收窄到名称，`required=false` 允许缺失；`@Resource` 是 JSR-250 标准注解，默认按名称（byName）注入，找不到名称匹配再退回按类型，不支持 `required` 与构造器注入。
 
 **先把话说白**：`@Autowired` 的意思是"给我一个这种类型的"，如果有多个再报名字；`@Resource` 的意思是"给我一个叫这个名字的"，名字对不上才看类型。所以同一个接口有多个实现时，`@Resource` 靠字段名就能选中，`@Autowired` 必须配 `@Qualifier` 或 `@Primary`。
@@ -405,6 +419,8 @@ public class PayService {
 - 追问：为什么字段注入不推荐？→ 答题要点：无法 `final`、无法脱离容器构造、隐藏依赖数量、循环依赖时掩盖设计问题。
 
 ### Q8. AOP 的织入时机？JDK 代理与 CGLIB 怎么选？（中级）
+
+> 前置：代理、字节码、切面
 
 **一句话结论**：Spring AOP 是运行期织入，通过动态代理在 `BeanPostProcessor` 后置阶段生成代理对象；目标类有接口时可用 JDK 动态代理，无接口时用 CGLIB 生成子类，Spring Boot 2.x 起默认 `proxyTargetClass=true` 统一走 CGLIB。
 
@@ -458,6 +474,8 @@ public class CostAspect {
 
 ### Q9. 多个切面作用于同一方法，执行顺序如何确定？（中级）
 
+> 前置：`Order`、通知类型
+
 **一句话结论**：切面的顺序由 `@Order` 值或 `Ordered` 接口决定，值越小优先级越高、越靠外层；进入时按升序执行前置通知，退出时按降序执行后置通知，形成栈式结构。
 
 **先把话说白**：切面像洋葱皮，`@Order(1)` 是最外层。请求进来先穿过最外层，一层层往里；返回时从最内层往外一层层退。所以外层的前置最先执行、后置最后执行，内层反之。
@@ -480,6 +498,8 @@ public class CostAspect {
 - 追问：如何让某个切面一定在最内层？→ 答题要点：实现 `Ordered` 返回 `Ordered.LOWEST_PRECEDENCE`，或 `@Order(Ordered.LOWEST_PRECEDENCE)`。
 
 ### Q10. AOP 有哪些失效场景？为什么自调用不走代理？（中级）
+
+> 前置：自调用、代理对象
 
 **一句话结论**：AOP 依赖代理对象，凡是"没有经过代理"的调用都不会被增强；最典型的是同类内部 `this.method()` 自调用，其余包括 `private`/`static`/`final` 方法、`final` 类、非 Spring 管理的对象、切点不匹配、异常被吞。
 
@@ -525,6 +545,8 @@ public class OrderService {
 - 追问：`@Async` 失效和 `@Transactional` 失效的原因一样吗？→ 答题要点：本质相同，都是"没走代理"；`@Async` 还多一种情况——返回值必须是 `void` 或 `Future`，否则调用方拿不到结果。
 
 ### Q11. `@Transactional` 的实现原理是什么？（中级）
+
+> 前置：AOP、事务管理器、连接绑定
 
 **一句话结论**：`@Transactional` 是 AOP 的典型应用，`TransactionInterceptor` 拦截目标方法，在调用前通过 `PlatformTransactionManager` 开启事务并绑定到当前线程，调用后按结果提交或回滚。
 
@@ -581,6 +603,8 @@ public void batch(List<Order> orders) {
 
 ### Q12. 七种事务传播行为分别是什么？（高级）
 
+> 前置：事务边界、嵌套事务
+
 **一句话结论**：传播行为定义"当前方法被调用时，事务边界怎么处理"，默认 `REQUIRED`（有则加入、无则新建）；三个需要重点区分的是 `REQUIRES_NEW`（挂起外层、独立物理事务）、`NESTED`（同一物理事务、保存点回滚）、`MANDATORY`（必须已有事务）。
 
 **先把话说白**：传播行为回答的是"我现在要执行了，外面已经有一个事务，我该怎么办"。是凑合着用（`REQUIRED`）、另起炉灶（`REQUIRES_NEW`）、还是在自己家里划一小块地试错（`NESTED`）。选错会导致两种极端：该独立的不独立，一条脏数据把整批回滚；该合并的却独立，外层回滚了内层还留着。
@@ -618,6 +642,8 @@ public void batch(List<Order> orders) {
 **加分点**：能说出"传播行为只在跨代理调用时生效"，自调用时 `REQUIRED`/`REQUIRES_NEW` 全部退化，因为根本没有第二次拦截。
 
 ### Q13. 事务在哪些情况下会失效？（中级）
+
+> 前置：代理、异常类型、存储引擎
 
 **一句话结论**：事务失效的本质只有两类——"调用没经过代理"和"事务管理器没有按预期工作"；前者包括自调用、非 public、非 Bean，后者包括异常被吞、`rollbackFor` 不匹配、传播行为配错、数据源或引擎不支持事务。
 
@@ -683,6 +709,8 @@ public class UserService {
 
 ### Q14. 事务与锁有哪些常见坑？（高级）
 
+> 前置：隔离级别、锁等待
+
 **一句话结论**：事务持锁直到提交，所以"事务未提交导致锁等待""长事务拖垮连接池与 MVCC""事务内调用远程服务造成数据不一致""`@Async` 丢失事务上下文"是最常见的四类事故，核心原则是**把事务缩到最小**。
 
 **先把话说白**：事务像一把锁，你把东西拿在手里（未提交），别人就只能等。如果你拿着一张表去打电话、发短信、调第三方接口，别人就得等你打完电话——这就是线上超时的来源。事务不是越大越安全，越大越慢、越容易死锁。
@@ -737,6 +765,8 @@ TransactionSynchronizationManager.registerSynchronization(new TransactionSynchro
 - 追问：为什么说"事务方法里不要做 RPC"？→ 答题要点：RPC 的耗时会放大锁持有时间，且 RPC 成功/本地回滚无法原子，属于典型的分布式一致性问题，不是加个注解能解决的。
 
 ### Q15. Spring MVC 一次请求的完整流程？（中级）
+
+> 前置：DispatcherServlet、HandlerMapping
 
 **一句话结论**：请求先到 `DispatcherServlet`，它通过 `HandlerMapping` 找到 handler 与拦截器链，再用 `HandlerAdapter` 调用 handler；期间由 `HandlerMethodArgumentResolver` 解析参数、`HandlerMethodReturnValueHandler` 处理返回值，最后经 `ViewResolver` 渲染或 `HttpMessageConverter` 写出 JSON。
 
@@ -802,6 +832,8 @@ sequenceDiagram
 
 ### Q16. 过滤器、拦截器、AOP 有什么区别？执行顺序如何？（中级）
 
+> 前置：请求链路、执行顺序
+
 **一句话结论**：`Filter` 属于 Servlet 规范、在容器层生效，能包装 `request`/`response`；`Interceptor` 属于 Spring MVC、在 `DispatcherServlet` 内生效，能拿到 handler 信息；AOP 作用在 Bean 方法层，能拿到方法参数但拿不到原始请求，需要 `RequestContextHolder` 间接获取。
 
 **先把话说白**：请求像快递，`Filter` 是小区的门禁（进小区就检查，不知道你找谁）；`Interceptor` 是前台（知道你要找哪个部门，能登记）；AOP 是部门主管在你办事前后加的流程（知道具体办什么事，但不知道你怎么进的大楼）。
@@ -836,6 +868,8 @@ sequenceDiagram
 - 追问：CORS 的预检请求会走拦截器吗？→ 答题要点：`OPTIONS` 预检通常在 `CorsFilter` 或 `DispatcherServlet` 的 `PreFlightHandler` 处处理，不会进入业务拦截器，需注意鉴权拦截器要放行预检。
 
 ### Q17. `@RequestBody`、`@RequestParam`、`@PathVariable` 怎么区分？全局异常怎么处理？（初级）
+
+> 前置：消息转换、全局异常
 
 **一句话结论**：`@RequestParam` 取查询串或表单字段，`@PathVariable` 取 URI 模板变量，`@RequestBody` 取请求体并用 `HttpMessageConverter` 反序列化；全局异常用 `@RestControllerAdvice` + `@ExceptionHandler` 统一兜底，返回结构化错误码。
 
@@ -894,6 +928,8 @@ public class GlobalExceptionHandler {
 
 ### Q18. Spring Boot 自动配置的原理是什么？（中级）
 
+> 前置：SPI、条件装配、starter
+
 **一句话结论**：`@SpringBootApplication` 组合了 `@EnableAutoConfiguration`，后者通过 `@Import(AutoConfigurationImportSelector)` 读取类路径下所有 jar 的自动配置清单（2.x 为 `spring.factories`，3.x 为 `AutoConfiguration.imports`），再按条件注解筛选后注册为 Bean。
 
 **先把话说白**：自动配置不是"Spring 猜你要什么"，而是"Spring 预先写好几百套配置方案，每套都带一个 if 条件，条件满足才生效"。你引入 `spring-boot-starter-web`，类路径上出现了 `DispatcherServlet`，那套 Web 配置的条件成立，于是自动配好；你没配数据源，`DataSourceAutoConfiguration` 的条件不成立，就不会报错。
@@ -944,6 +980,8 @@ public class OrderAutoConfiguration {
 - 追问：怎么知道某个自动配置为什么没生效？→ 答题要点：启动加 `--debug` 看 `ConditionEvaluationReport`，或在 `application.properties` 配 `logging.level.org.springframework.boot.autoconfigure=DEBUG`。
 
 ### Q19. 如何自定义一个 starter？命名有什么规范？（中级）
+
+> 前置：自动配置类、条件注解
 
 **一句话结论**：starter 拆成两个模块——`xxx-spring-boot-autoconfigure` 放自动配置类与 `AutoConfiguration.imports`，`xxx-spring-boot-starter` 只做依赖聚合；命名上官方用 `spring-boot-starter-xxx`，第三方用 `xxx-spring-boot-starter`。
 
@@ -1001,6 +1039,8 @@ public class OrderProperties {
 
 ### Q20. Spring Boot 的启动流程主干是什么？（中级）
 
+> 前置：SpringApplication、事件
+
 **一句话结论**：`SpringApplication.run` 先推断应用类型并准备环境，再创建对应类型的 `ApplicationContext`，调用 `refresh()` 完成容器初始化（内嵌 Web 容器在 `onRefresh` 阶段启动），最后执行 `ApplicationRunner`/`CommandLineRunner` 并发布 `ApplicationReadyEvent`。
 
 **先把话说白**：启动分两段：`new SpringApplication()` 做准备（判断是 Web 还是普通应用、加载监听器），`run()` 走流程（读配置、建容器、刷容器、启 Tomcat、跑启动任务）。真正创建 Bean 的是 `refresh()`，Boot 只是在它前后插了自己的动作。
@@ -1037,6 +1077,8 @@ public class OrderProperties {
 - 追问：`spring.main.lazy-initialization=true` 有什么影响？→ 答题要点：所有 Bean 延迟创建，启动变快但首次请求变慢，且配置错误延后暴露，不建议生产默认开启。
 
 ### Q21. 配置优先级、Profile、`@ConfigurationProperties` 与 `@Value` 的差异？（初级）
+
+> 前置：Environment、Profile
 
 **一句话结论**：Spring Boot 的配置优先级从高到低大致是"命令行参数 > Java 系统属性 > 操作系统环境变量 > 外部 `application-{profile}.yml` > 外部 `application.yml` > 包内 `application-{profile}.yml` > 包内 `application.yml` > 默认属性"；Profile 用于按环境切换配置；`@ConfigurationProperties` 适合批量结构化绑定，`@Value` 适合单个值并支持 SpEL。
 
@@ -1090,6 +1132,8 @@ public class SimpleHolder {
 
 ### Q22. 单例 Bean 是线程安全的吗？（中级）
 
+> 前置：无状态、成员变量
+
 **一句话结论**：Spring 不保证单例 Bean 的线程安全，它只保证"只创建一个实例"；无状态的 Bean（只有方法、没有可变成员变量）天然安全，一旦持有可变成员状态就必须自己处理并发。
 
 **先把话说白**：单例意味着所有请求共用一个对象。如果这个对象里有 `int count` 这种会被请求修改的字段，那和多个线程共用一个计数器没有区别。反过来，`@Service` 里只有 `@Autowired` 的依赖和方法内的局部变量，就没什么可争的。
@@ -1123,6 +1167,8 @@ public class SimpleHolder {
 
 ### Q23. Spring 里用到了哪些设计模式？（中级）
 
+> 前置：设计模式、容器
+
 **一句话结论**：Spring 几乎把 GoF 的常用模式用了一遍，最值得说的是工厂（`BeanFactory`）、单例（单例注册表）、代理（AOP）、模板方法（`JdbcTemplate`、`refresh`）、观察者（事件机制）、策略（`HandlerMapping`、`InstantiationStrategy`）、适配器（`HandlerAdapter`）、装饰器（`BeanWrapper`）、责任链（拦截器链）。
 
 **先把话说白**：这些模式不是 Spring 为了炫技硬套的，而是每个模式都对应一个具体的扩展需求：需要"怎么造"可替换就有工厂，需要"方法前后加逻辑"就有代理，需要"流程固定、步骤可变"就有模板方法。理解需求再记模式，比背清单牢固。
@@ -1149,6 +1195,8 @@ public class SimpleHolder {
 - 追问：为什么说 `refresh()` 是模板方法？→ 答题要点：`AbstractApplicationContext` 定义了十二步骨架，`onRefresh`、`postProcessBeanFactory` 留给子类实现。
 
 ### Q24. Spring 6 与 Spring Boot 3 有哪些关键变化？（高级）
+
+> 前置：Jakarta、AOT、GraalVM
 
 **一句话结论**：Spring Framework 6 / Spring Boot 3 的三大变化是 JDK 17 基线、`javax.*` 迁移到 `jakarta.*`、AOT 与 GraalVM native image 支持；此外还有 Observability 统一埋点、`PathPatternParser` 成为默认路径匹配器、HTTP Interface 声明式客户端。
 
@@ -1184,6 +1232,8 @@ public class SimpleHolder {
 - 追问：为什么要废弃 Sleuth？→ 答题要点：Sleuth 的埋点与 Brave 强绑定，Micrometer Observation 提供了厂商中立的门面，一套埋点可输出多种格式。
 
 ### Q25. 启动失败常见原因怎么排查？（中级）
+
+> 前置：条件装配、端口、依赖
 
 **一句话结论**：绝大多数启动失败集中在五类——Bean 冲突或缺失、循环依赖、配置缺失或类型不匹配、端口占用、数据源/中间件连不上；排查靠异常栈的第一行 + `--debug` 的条件评估报告 + `FailureAnalyzer` 的提示。
 
