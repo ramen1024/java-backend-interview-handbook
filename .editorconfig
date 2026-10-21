@@ -1,0 +1,16 @@
+root = true
+
+# 让编辑器与 Git 的换行符约定保持一致
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Windows 脚本用 CRLF
+[*.{bat,cmd,ps1}]
+end_of_line = crlf
+
+# Markdown 行尾两个空格是硬换行，不能自动裁剪
+[*.md]
+trim_trailing_whitespace = false
