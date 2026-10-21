@@ -1400,3 +1400,72 @@ public void updateProduct(Product p) {
 6. 列举至少 6 种索引失效场景，每种说出"为什么有序性被破坏"或"为什么优化器主动放弃"。
 7. 写出深分页的两种优化 SQL，并说明游标分页在排序键不唯一时如何避免漏数据。
 8. 说明"给大表加一个字段导致全站雪崩"的完整链路，并给出三种预防手段。
+
+## 七、动手实验与失败现象
+
+### 实验：一条 SQL 在有无索引时的执行计划
+
+先造一张一万行的表（MySQL 8.0.33 实测）：
+
+```sql
+SET SESSION cte_max_recursion_depth = 20000;
+
+CREATE TABLE t_user (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  name VARCHAR(32),
+  age INT
+) ENGINE=InnoDB;
+
+INSERT INTO t_user (name, age)
+WITH RECURSIVE seq(n) AS (
+  SELECT 1 UNION ALL SELECT n + 1 FROM seq WHERE n < 10000
+)
+SELECT CONCAT('user', n), n % 100 FROM seq;
+```
+
+`age` 取值是 `n % 100`，所以每个年龄恰好 100 行。先看没有索引时：
+
+```sql
+EXPLAIN FORMAT=TREE SELECT * FROM t_user WHERE age = 30;
+```
+
+```text
+-> Filter: (t_user.age = 30)  (cost=1024 rows=1017)
+    -> Table scan on t_user  (cost=1024 rows=10173)
+```
+
+加上索引再看：
+
+```sql
+CREATE INDEX idx_age ON t_user (age);
+ANALYZE TABLE t_user;
+EXPLAIN FORMAT=TREE SELECT * FROM t_user WHERE age = 30;
+```
+
+```text
+-> Index lookup on t_user using idx_age (age=30)  (cost=29.5 rows=100)
+```
+
+从"扫 10173 行"变成"定位 100 行"，代价估算从 1024 降到 29.5。注意 `rows=100` 是估算值，不是精确值；优化器靠采样统计信息得出，所以统计信息过期时它也会选错。
+
+**改一个地方看看**：把条件改成 `age > 98`，执行计划变成 `type=range`、`rows=100`、`Extra=Using index condition`；改成 `age > 30` 反而退回全表扫描 `type=ALL`——因为这时要回表取 68% 的行，优化器判断"走索引再回表"比"直接顺序扫"更贵。**有索引不等于一定走索引**，这是 Q11 那道题最容易被忽略的一半。
+
+### 失败现象：索引在，但一行也用不上
+
+```sql
+EXPLAIN SELECT * FROM t_user WHERE age + 1 = 31;
+EXPLAIN SELECT * FROM t_user WHERE name = 123;
+```
+
+两条语句的关键列（其余列省略）：
+
+| 查询条件 | type | possible_keys | key | rows |
+| --- | --- | --- | --- | --- |
+| `age + 1 = 31` | ALL | NULL | NULL | 9868 |
+| `name = 123` | ALL | idx_name | NULL | 10173 |
+
+**症状**：`idx_age` 明明存在，`possible_keys` 却是 NULL；`idx_name` 更迷惑——优化器"考虑过"它，最终 `key` 仍是 NULL，实际走全表扫描。
+
+**原因**：索引里存的是**列的原值**的有序结构。`age + 1 = 31` 要先对每一行算一遍 `age + 1`，索引的有序性用不上，只能逐行过滤；`name = 123` 是隐式类型转换，MySQL 把 `name` 转成数字再比，等价于对列做了函数运算，同样用不上索引（回指 Q8）。
+
+排查口诀：**索引列上不要做运算、不要套函数、不要让类型不一致**。三件事只要发生一件，索引就退化成摆设。

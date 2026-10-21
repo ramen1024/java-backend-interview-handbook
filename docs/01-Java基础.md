@@ -826,3 +826,65 @@ static void change(StringBuilder sb, String s) {
 6. 说明 JDK 动态代理与 CGLIB 的适用边界，以及 Spring 如何选择。
 7. 画出 select / poll / epoll 的数据结构与调用流程差异，并说明 ET 模式为什么要读到 `EAGAIN`。
 8. 解释 `sendfile` 相比 `read + write` 少了几次拷贝、几次上下文切换。
+
+## 七、动手实验与失败现象
+
+### 实验：看清 `==` 到底在比什么
+
+```java
+public class CacheLab {
+    public static void main(String[] args) {
+        Integer a = 127, b = 127;
+        Integer c = 128, d = 128;
+        System.out.println("127 == 127 : " + (a == b));
+        System.out.println("128 == 128 : " + (c == d));
+        System.out.println("128 equals : " + c.equals(d));
+
+        String s1 = "java";
+        String s2 = new String("java");
+        System.out.println("s1 == s2   : " + (s1 == s2));
+        System.out.println("intern     : " + (s1 == s2.intern()));
+    }
+}
+```
+
+运行结果（JDK 21.0.9，Windows）：
+
+```text
+127 == 127 : true
+128 == 128 : false
+128 equals : true
+s1 == s2   : false
+intern     : true
+```
+
+`128 == 128` 为 false，不是因为 128 特殊，而是因为两个 `Integer` 是不同对象，`==` 比的是引用。`Integer.valueOf` 在 -128~127 之间返回缓存里的同一个对象，超出就 `new`，所以 127 为 true、128 为 false。
+
+**改一个地方看看**：把 `128` 改成 `127`，第二行立刻变 true；把 `new String("java")` 改成 `"ja" + "va"`，第四行变 true，因为编译器在编译期就把两个字面量折叠成了一个常量池引用。同一段代码，只改写法不改语义，`==` 的结果就变了——这正是不能用 `==` 比较内容的原因。
+
+### 失败现象：重写 `equals` 忘了 `hashCode`
+
+```java
+import java.util.HashMap;
+import java.util.Map;
+
+public class KeyLab {
+    static class Key {
+        String id;
+        Key(String id) { this.id = id; }
+        @Override public boolean equals(Object o) {
+            return o instanceof Key && ((Key) o).id.equals(id);
+        }
+    }
+
+    public static void main(String[] args) {
+        Map<Key, String> map = new HashMap<Key, String>();
+        map.put(new Key("A001"), "订单 A001");
+        System.out.println("get 同内容新对象: " + map.get(new Key("A001")));
+    }
+}
+```
+
+**症状**：输出 `get 同内容新对象: null`。对象确实 put 进去了，遍历也能看到，但用"同一个业务主键"新建的对象取不出来，`containsKey` 同样是 false。
+
+**原因**：`HashMap` 定位分两步——先用 `hashCode` 找桶，再用 `equals` 在桶内确认。只重写 `equals` 时，两个"相等"对象的 `hashCode` 仍来自 `Object` 的地址散列，落进不同桶，第一步就没命中，根本没机会走到 `equals`。这也解释了为什么"存进去却取不出来"往往不是 `equals` 写错，而是 `hashCode` 没跟着改（回指 Q2）。

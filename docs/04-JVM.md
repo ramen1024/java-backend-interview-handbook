@@ -1537,3 +1537,75 @@ stop                                        # 7. 排查结束，撤销增强
 6. 说出双亲委派的完整委派链，并举出三个打破它的真实场景，说明每个场景打破的原因。
 7. 给出一次"线上 Full GC 频繁"的排查步骤，每一步都要说清"看什么数据、据此得出什么结论"。
 8. 写出 CPU 100% 的排查命令序列，并说明 `jmap -histo:live` 为什么在生产上要慎用。
+
+## 七、动手实验与失败现象
+
+### 实验：栈深度到底由什么决定
+
+```java
+public class StackLab {
+    static int depth = 0;
+
+    static void recurse() {
+        depth++;
+        recurse();
+    }
+
+    public static void main(String[] args) {
+        try {
+            recurse();
+        } catch (StackOverflowError e) {
+            System.out.println("栈深度: " + depth);
+            System.out.println("异常类型: " + e.getClass().getSimpleName());
+        }
+    }
+}
+```
+
+运行结果（JDK 21.0.9，Windows x64；栈深度随 JIT 状态浮动，下面是一次实际输出）：
+
+```text
+栈深度: 22754
+异常类型: StackOverflowError
+```
+
+**改一个地方看看**：不改代码，加参数 `java -Xss256k StackLab`，同一台机器上另一次运行的栈深度降到 3500。默认栈大小由操作系统和 JVM 决定（x64 常见为 512KB~1MB），所以"递归多少层会爆"没有统一答案，只能以目标环境的实测为准。
+
+这条实验也解释了 Q2 的分界：`StackOverflowError` 是**栈**放不下调用帧，属于单个线程的问题，`catch` 之后线程还能继续跑；`OutOfMemoryError` 是**堆**放不下对象，通常意味着进程已经不可用。两者都是 `Error`，但一个能兜、一个兜不住。
+
+### 失败现象：静态集合把对象一个个攒起来
+
+```java
+import java.util.ArrayList;
+import java.util.List;
+
+public class LeakLab {
+    static final List<byte[]> HOLDER = new ArrayList<byte[]>();
+
+    public static void main(String[] args) {
+        int mb = 0;
+        try {
+            while (true) {
+                HOLDER.add(new byte[1024 * 1024]);
+                mb++;
+            }
+        } catch (OutOfMemoryError e) {
+            System.out.println("已持有: " + mb + " MB");
+            System.out.println("异常信息: " + e.getMessage());
+        }
+    }
+}
+```
+
+用 `java -Xmx64m LeakLab` 运行，结果：
+
+```text
+已持有: 31 MB
+异常信息: Java heap space
+```
+
+**症状**：堆上限 64MB，却在持有 31MB 时就抛了 OOM；更典型的表现是 GC 频率越来越高、每次 Full GC 后老年代占用几乎不降，最终 `java.lang.OutOfMemoryError: Java heap space`。
+
+**原因**：`HOLDER` 是静态字段，属于 GC Roots，它引用的每个 `byte[]` 都可达，可达性分析永远判它们存活。这不是"忘了释放"，而是**引用链没断**——对象根本进不了回收范围（回指 Q7、Q20）。
+
+排查这类问题不要先怀疑 GC 参数：先 `jmap -histo:live` 看哪类对象最多，再 `jmap -dump` 用 MAT 找"谁在引用它"，支配树上的第一层通常就是那个静态集合。

@@ -926,3 +926,45 @@ return 1                           -- 扣减成功
 8. 能否讲清哨兵从 sdown 到选主再到通知客户端的完整流程，以及脑裂的防护参数？
 9. 能否解释 Cluster 为什么是 16384 个槽，`MOVED` 与 `ASK` 的使用时机差在哪？
 10. 给你 1000 万个小 key 的缓存需求，能否粗算出需要多少内存并说明预留比例？
+
+## 七、动手实验与失败现象
+
+### 实验：一把能自动过期的锁
+
+```bash
+redis-cli --csv SET lock:order uuid-A NX PX 3000
+redis-cli --csv SET lock:order uuid-B NX PX 3000
+redis-cli --csv EVAL "if redis.call('get',KEYS[1])==ARGV[1] then \
+  return redis.call('del',KEYS[1]) else return 0 end" 1 lock:order uuid-A
+redis-cli --csv GET lock:order
+```
+
+运行结果（Redis 7.x 兼容命令，redis-cli 8.6.3；`NULL` 表示 nil）：
+
+```text
+"OK"
+NULL
+1
+NULL
+```
+
+四行的含义：A 抢锁成功；B 抢锁失败（key 已存在）；A 用 Lua 校验持有者后释放，返回 1 表示删除成功；最后 key 不存在。三件事必须一起做才算"正确的锁"——`NX` 保证互斥、`PX` 保证不会因为进程崩溃而永久死锁、Lua 比较 value 保证只删自己的锁。
+
+`--csv` 只是为了让 nil 显示成 `NULL`；不用它时 redis-cli 对 nil 输出空行，看日志时很容易和空字符串混淆。
+
+**改一个地方看看**：把 `PX 3000` 改成 `PX 100`，隔 0.2 秒再 `GET lock:order`，结果是 `NULL`——锁已经过期。这说明过期时间不是"清理垃圾"的参数，而是**锁的租约**：业务没在租约内跑完，锁就自动失效，别的进程可以进来。租约该设多长，取决于业务最长执行时间，而不是随手写个 30 秒。
+
+### 失败现象：锁过期后删掉了别人的锁
+
+```bash
+redis-cli --csv SET lock:order A NX PX 100
+sleep 0.3
+redis-cli --csv GET lock:order
+redis-cli --csv SET lock:order B NX PX 3000
+redis-cli --csv DEL lock:order
+redis-cli --csv GET lock:order
+```
+
+**症状**：输出依次为 `"OK"`、`NULL`、`"OK"`、`1`、`NULL`。B 刚拿到锁，锁就没了，A 和 B 同时进入临界区——库存被扣了两次，日志里却看不出谁删的。
+
+**原因**：A 的锁 100ms 后自动过期，B 正常抢到；A 执行完业务后仍然执行 `DEL`，而 `DEL` 不校验持有者，删的是 B 的 key。修法就是实验里那段 Lua：先 `GET` 比对 value，相等才 `DEL`。注意"比对 + 删除"必须是原子操作，用两条命令拼是没用的——中间照样能被插入（回指 Q12）。

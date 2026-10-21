@@ -1306,3 +1306,102 @@ public class SimpleHolder {
 6. 对比 `REQUIRED`、`REQUIRES_NEW`、`NESTED` 的物理事务数量、锁行为与回滚范围。
 7. 画出 Spring MVC 的请求链路，标出参数解析、返回值处理、异常处理分别发生在哪一步。
 8. 说明 Spring Boot 3 的自动配置类是如何被发现的，以及 `@ConditionalOnMissingBean` 为什么能实现"用户优先"。
+
+## 七、动手实验与失败现象
+
+### 实验：事务是怎么"织"进业务方法的
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+public class ProxyLab {
+    interface OrderService { void create(String id); }
+
+    static class OrderServiceImpl implements OrderService {
+        public void create(String id) {
+            System.out.println("业务方法执行: 创建订单 " + id);
+        }
+    }
+
+    public static void main(String[] args) {
+        final OrderService target = new OrderServiceImpl();
+        InvocationHandler handler = new InvocationHandler() {
+            public Object invoke(Object proxy, Method method, Object[] a) throws Throwable {
+                System.out.println("[事务] 开启");
+                Object r = method.invoke(target, a);
+                System.out.println("[事务] 提交");
+                return r;
+            }
+        };
+        OrderService proxy = (OrderService) Proxy.newProxyInstance(
+                ProxyLab.class.getClassLoader(),
+                new Class<?>[]{OrderService.class}, handler);
+        proxy.create("A001");
+    }
+}
+```
+
+运行结果（JDK 21.0.9）：
+
+```text
+[事务] 开启
+业务方法执行: 创建订单 A001
+[事务] 提交
+```
+
+业务方法里没有一行事务代码，事务却生效了——因为调用方拿到的不是 `OrderServiceImpl`，而是运行期生成的代理类。`@Transactional` 在 Spring 里就是这样一个 `InvocationHandler`：进方法前拿连接、关自动提交，出方法时提交或回滚。
+
+**改一个地方看看**：把最后一行改成 `target.create("A001")`（直接调原始对象），两行事务日志立刻消失，只剩业务打印。**AOP 的前提是"调用经过代理"**，这一个前提能解释后面几乎所有失效场景。
+
+### 失败现象：自己调自己，事务不见了
+
+```java
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+
+public class SelfInvocationLab {
+    interface OrderService { void create(String id); void audit(String id); }
+
+    static class OrderServiceImpl implements OrderService {
+        public void create(String id) {
+            System.out.println("业务方法执行: 创建订单 " + id);
+            this.audit(id);
+        }
+        public void audit(String id) {
+            System.out.println("审计方法执行: " + id);
+        }
+    }
+
+    public static void main(String[] args) {
+        final OrderService target = new OrderServiceImpl();
+        InvocationHandler handler = new InvocationHandler() {
+            public Object invoke(Object proxy, Method method, Object[] a) throws Throwable {
+                System.out.println("[事务] 开启 -> " + method.getName());
+                Object r = method.invoke(target, a);
+                System.out.println("[事务] 提交 -> " + method.getName());
+                return r;
+            }
+        };
+        OrderService proxy = (OrderService) Proxy.newProxyInstance(
+                SelfInvocationLab.class.getClassLoader(),
+                new Class<?>[]{OrderService.class}, handler);
+        proxy.create("A002");
+    }
+}
+```
+
+**症状**：
+
+```text
+[事务] 开启 -> create
+业务方法执行: 创建订单 A002
+审计方法执行: A002
+[事务] 提交 -> create
+```
+
+`create` 有事务，`audit` 前后什么都没有。如果 `audit` 上标了 `@Transactional(propagation = REQUIRES_NEW)`，这里就不会开新事务，看起来像"注解没生效"。
+
+**原因**：`this` 指向原始对象，不是代理。`this.audit()` 是一次普通的方法调用，根本没过 `InvocationHandler`。三条常见修法：把方法拆到另一个 Bean 里注入调用、用 `AopContext.currentProxy()`（需开启 `exposeProxy`）、或者干脆把事务边界提到外层（回指 Q10、Q13）。
