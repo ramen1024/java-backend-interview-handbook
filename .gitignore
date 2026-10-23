@@ -3,9 +3,10 @@
 Thumbs.db
 desktop.ini
 
-# 编辑器与 IDE
+# 编辑器与 IDE（本机配置，不随仓库分发）
 .idea/
 .vscode/
+.obsidian/
 *.swp
 *.swo
 *~
@@ -13,6 +14,11 @@ desktop.ini
 # 临时输出
 *.tmp
 *.log
+
+# 编译器 / 解释器产物（可由源码重建）
+*.class
+__pycache__/
+*.py[cod]
 
 # 实验代码的抽取与编译产物（可由 verify_labs.py 重建）
 .workbuddy/spec/verify/
