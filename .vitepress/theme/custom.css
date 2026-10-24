@@ -1,0 +1,49 @@
+/* 侧边栏放宽一点：章节名较长，默认 272px 会换行 */
+:root {
+  --vp-sidebar-width: 296px;
+}
+
+/* 跳转锚点时不要被顶部导航遮住 */
+.vp-doc h2,
+.vp-doc h3 {
+  scroll-margin-top: calc(var(--vp-nav-height) + 16px);
+}
+
+/* 全书 235+ 行表格，默认行高偏松，正文页会拉得很长 */
+.vp-doc table {
+  font-size: 14px;
+}
+
+/* 表头不换行：否则「面试难度」这类短表头会被压成竖排单字 */
+.vp-doc th {
+  white-space: nowrap;
+}
+
+.vp-doc th,
+.vp-doc td {
+  padding: 7px 11px;
+}
+
+/* 「一句话结论」「前置：」都写在引用块里，给它们一点视觉重量 */
+.vp-doc blockquote {
+  border-left: 3px solid var(--vp-c-brand-1);
+  background-color: var(--vp-c-bg-soft);
+  padding: 10px 16px;
+  margin: 16px 0;
+}
+
+.vp-doc blockquote > p {
+  font-size: 15px;
+  color: var(--vp-c-text-1);
+}
+
+/* 代码块在暗色下与正文区分更明显 */
+.vp-doc div[class*='language-'] {
+  border-radius: 10px;
+}
+
+/* mermaid 图在窄屏下允许横向滚动 */
+.mermaid-diagram,
+div[class*='mermaid'] {
+  overflow-x: auto;
+}

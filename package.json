@@ -1,0 +1,20 @@
+{
+  "name": "java-backend-interview-handbook",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Java 后端面试系统化复习手册的站点工程",
+  "scripts": {
+    "data": "node scripts/prepare.mjs",
+    "predev": "npm run data",
+    "dev": "vitepress dev",
+    "prebuild": "npm run data",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "mermaid": "^11.17.2",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  }
+}
