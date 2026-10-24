@@ -117,7 +117,7 @@ function randomPick() {
         v-model="keyword"
         class="qb-input"
         type="search"
-        placeholder="搜题目或答案，例如：MVCC、双亲委派、限流、CAS"
+        placeholder="搜题目或答案，如 MVCC、限流"
         aria-label="搜索题目"
       />
       <button

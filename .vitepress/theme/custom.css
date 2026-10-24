@@ -128,7 +128,8 @@ div[class*='mermaid'] {
   color: var(--vp-c-text-3);
 }
 
-.home-chip {
+/* .vp-doc a 的选择器权重高于单类名，这里必须加一级 */
+.vp-doc .home-chip {
   padding: 4px 12px;
   font-size: 13px;
   color: var(--vp-c-text-2);
@@ -138,7 +139,7 @@ div[class*='mermaid'] {
   transition: color 0.15s, border-color 0.15s;
 }
 
-.home-chip:hover {
+.vp-doc .home-chip:hover {
   color: var(--vp-c-brand-1);
   border-color: var(--vp-c-brand-1);
 }
