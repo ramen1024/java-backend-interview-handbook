@@ -49,8 +49,21 @@ CI 跑在 Ubuntu 上，没有这个问题。
 
 换到根路径部署时，记得移除或清空 `DOCS_BASE`，否则资源会去 `/java-backend-interview-handbook/assets/...` 找。
 
-## 写作时的两个坑
+## 品牌素材
 
+- `docs/public/favicon.svg`：站标（竖条 + 三条递减横线，对应「结论 → 原理 → 取舍」），同时用作导航栏 logo。
+- `docs/public/apple-touch-icon.png`（180×180）、`docs/public/og.png`（1200×630）：由 `scripts/brand/*.html` 截图生成，改设计后重跑：
+
+```bash
+npx playwright screenshot --channel msedge --viewport-size "180,180" \
+  "file://$PWD/scripts/brand/icon.html" docs/public/apple-touch-icon.png
+npx playwright screenshot --channel msedge --viewport-size "1200,630" \
+  "file://$PWD/scripts/brand/og.html" docs/public/og.png
+```
+
+`og:image` 必须是绝对地址，域名写在 `.vitepress/config.mts` 的 `SITE_URL`，换域名时记得改。
+
+## 写作时的两个坑
 - **正文里出现双花括号**（如 `{{ put("a", 1); }}`）会被 Vue 当成插值表达式导致构建失败，用 `<code v-pre>...</code>` 包住。
 - **新增章节**要同时在 `scripts/prepare.mjs` 的 `CHAPTERS` 和 `.vitepress/config.mts` 的 `rewrites` 里加一条映射（中文文件名 → ASCII 路由），两处必须一致，否则构建报死链。
 

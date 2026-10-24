@@ -12,6 +12,12 @@
   }
 }
 
+/* 导航栏 Logo：默认 24px 下线条偏糊，放大一档 */
+.VPNavBarTitle .logo {
+  height: 26px;
+  width: 26px;
+}
+
 /* 跳转锚点时不要被顶部导航遮住 */
 .vp-doc h2,
 .vp-doc h3 {

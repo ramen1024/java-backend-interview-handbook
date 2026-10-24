@@ -27,6 +27,9 @@ const rewrites = {
  */
 const base = process.env.DOCS_BASE ?? '/'
 
+/** 分享卡片里的 og:image 必须是绝对地址，这里写死线上域名 */
+const SITE_URL = 'https://ramen1024.github.io/java-backend-interview-handbook/'
+
 export default withMermaid(
   defineConfig({
     base,
@@ -39,7 +42,24 @@ export default withMermaid(
     cleanUrls: true,
     lastUpdated: true,
     rewrites,
-    head: [['meta', { name: 'theme-color', content: '#0b1120' }]],
+    head: [
+      ['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}favicon.svg` }],
+      ['link', { rel: 'apple-touch-icon', href: `${base}apple-touch-icon.png` }],
+      ['meta', { name: 'theme-color', content: '#0b1120' }],
+      ['meta', { property: 'og:type', content: 'website' }],
+      ['meta', { property: 'og:title', content: 'Java 后端面试系统化复习手册' }],
+      [
+        'meta',
+        {
+          property: 'og:description',
+          content: '13 章正文、261 道题，按「结论 → 原理 → 取舍」组织的 Java 后端面试复习手册。'
+        }
+      ],
+      ['meta', { property: 'og:url', content: SITE_URL }],
+      ['meta', { property: 'og:image', content: `${SITE_URL}og.png` }],
+      ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+      ['meta', { name: 'twitter:image', content: `${SITE_URL}og.png` }]
+    ],
     markdown: {
       lineNumbers: true,
       image: { lazyLoading: true }
@@ -52,6 +72,7 @@ export default withMermaid(
       themeVariables: { fontFamily: 'Inter, "PingFang SC", "Microsoft YaHei", sans-serif' }
     },
     themeConfig: {
+      logo: '/favicon.svg',
       nav: [
         { text: '首页', link: '/' },
         { text: '题库速查', link: '/questions' }
