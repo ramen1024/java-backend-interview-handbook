@@ -54,6 +54,18 @@ const isFiltered = computed(
     threshold.value !== 'all'
 )
 
+/** 题面里的反引号是 Markdown 行内代码，这里切成片段渲染，避免把 ` 原样显示 */
+function segments(text: string) {
+  return text
+    .split(/(`[^`]+`)/)
+    .filter(Boolean)
+    .map((part) =>
+      part.startsWith('`') && part.endsWith('`')
+        ? { text: part.slice(1, -1), code: true }
+        : { text: part, code: false }
+    )
+}
+
 function reset() {
   keyword.value = ''
   chapter.value = 'all'
@@ -145,7 +157,12 @@ function randomPick() {
       <li v-for="q in filtered" :key="q.link" class="qb-item">
         <a class="qb-title" :href="withBase(q.link)">
           <span class="qb-id">{{ q.id }}</span>
-          <span>{{ q.title }}</span>
+          <span>
+            <template v-for="(seg, i) in segments(q.title)" :key="i">
+              <code v-if="seg.code" class="qb-code">{{ seg.text }}</code>
+              <template v-else>{{ seg.text }}</template>
+            </template>
+          </span>
         </a>
         <div class="qb-meta">
           <span class="tag" :class="`lv-${q.difficulty}`">{{ q.difficulty }}</span>
@@ -153,7 +170,12 @@ function randomPick() {
           <span class="tag tag-plain">门槛 {{ q.threshold }}</span>
           <span class="qb-chapter">{{ q.chapterTitle }}</span>
         </div>
-        <p class="qb-answer">{{ q.answer }}</p>
+        <p class="qb-answer">
+          <template v-for="(seg, i) in segments(q.answer)" :key="i">
+            <code v-if="seg.code" class="qb-code">{{ seg.text }}</code>
+            <template v-else>{{ seg.text }}</template>
+          </template>
+        </p>
       </li>
     </ul>
 
@@ -366,6 +388,15 @@ function randomPick() {
   font-size: 14px;
   line-height: 1.7;
   color: var(--vp-c-text-2);
+}
+
+.qb-code {
+  padding: 1px 5px;
+  font-family: var(--vp-font-family-mono);
+  font-size: 0.88em;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg-soft);
+  border-radius: 4px;
 }
 
 .qb-empty {

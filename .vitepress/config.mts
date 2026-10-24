@@ -68,7 +68,21 @@ export default withMermaid(
       search: {
         provider: 'local',
         options: {
-          detailedView: true
+          detailedView: true,
+          translations: {
+            button: { buttonText: '搜索', buttonAriaLabel: '搜索' },
+            modal: {
+              displayDetails: '显示详细列表',
+              resetButtonTitle: '重置搜索',
+              backButtonTitle: '关闭搜索',
+              noResultsText: '没有结果',
+              footer: {
+                selectText: '选择',
+                navigateText: '导航',
+                closeText: '关闭'
+              }
+            }
+          }
         }
       },
       footer: {
