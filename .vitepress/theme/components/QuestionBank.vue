@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { withBase } from 'vitepress'
 import questions from '../../data/questions.mjs'
 
@@ -53,6 +53,26 @@ const isFiltered = computed(
     priority.value !== 'all' ||
     threshold.value !== 'all'
 )
+
+/** 答案默认收起：261 条全展开会把列表变成一堵墙，先让人扫题面 */
+const openAnswers = reactive(new Set<string>())
+
+const allOpen = computed(
+  () => filtered.value.length > 0 && filtered.value.every((q) => openAnswers.has(q.link))
+)
+
+function toggleAnswer(link: string) {
+  if (openAnswers.has(link)) openAnswers.delete(link)
+  else openAnswers.add(link)
+}
+
+function toggleAllAnswers() {
+  if (allOpen.value) {
+    for (const q of filtered.value) openAnswers.delete(q.link)
+  } else {
+    for (const q of filtered.value) openAnswers.add(q.link)
+  }
+}
 
 /** 题面里的反引号是 Markdown 行内代码，这里切成片段渲染，避免把 ` 原样显示 */
 function segments(text: string) {
@@ -149,28 +169,43 @@ function randomPick() {
     </div>
 
     <div class="qb-count">
-      命中 <strong>{{ filtered.length }}</strong> / {{ all.length }} 题
-      <button v-if="isFiltered" class="qb-reset" type="button" @click="reset">重置筛选</button>
+      <span>命中 <strong>{{ filtered.length }}</strong> / {{ all.length }} 题</span>
+      <span class="qb-count-actions">
+        <button class="qb-reset" type="button" @click="toggleAllAnswers">
+          {{ allOpen ? '收起答案' : '展开答案' }}
+        </button>
+        <button v-if="isFiltered" class="qb-reset" type="button" @click="reset">重置筛选</button>
+      </span>
     </div>
 
     <ul class="qb-list">
       <li v-for="q in filtered" :key="q.link" class="qb-item">
-        <a class="qb-title" :href="withBase(q.link)">
-          <span class="qb-id">{{ q.id }}</span>
-          <span>
-            <template v-for="(seg, i) in segments(q.title)" :key="i">
-              <code v-if="seg.code" class="qb-code">{{ seg.text }}</code>
-              <template v-else>{{ seg.text }}</template>
-            </template>
-          </span>
-        </a>
+        <div class="qb-head">
+          <a class="qb-title" :href="withBase(q.link)">
+            <span class="qb-id">{{ q.id }}</span>
+            <span>
+              <template v-for="(seg, i) in segments(q.title)" :key="i">
+                <code v-if="seg.code" class="qb-code">{{ seg.text }}</code>
+                <template v-else>{{ seg.text }}</template>
+              </template>
+            </span>
+          </a>
+          <button
+            class="qb-toggle"
+            type="button"
+            :aria-expanded="openAnswers.has(q.link)"
+            @click="toggleAnswer(q.link)"
+          >
+            {{ openAnswers.has(q.link) ? '收起' : '答案' }}
+          </button>
+        </div>
         <div class="qb-meta">
           <span class="tag" :class="`lv-${q.difficulty}`">{{ q.difficulty }}</span>
           <span class="tag" :class="`p-${q.priority}`">{{ q.priority }}</span>
           <span class="tag tag-plain">门槛 {{ q.threshold }}</span>
           <span class="qb-chapter">{{ q.chapterTitle }}</span>
         </div>
-        <p class="qb-answer">
+        <p v-if="openAnswers.has(q.link)" class="qb-answer">
           <template v-for="(seg, i) in segments(q.answer)" :key="i">
             <code v-if="seg.code" class="qb-code">{{ seg.text }}</code>
             <template v-else>{{ seg.text }}</template>
@@ -230,7 +265,6 @@ function randomPick() {
 
 .qb-reset {
   padding: 2px 9px;
-  margin-left: 10px;
   font-size: 12px;
 }
 
@@ -285,6 +319,11 @@ function randomPick() {
 }
 
 .qb-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 18px 0 10px;
   font-size: 13px;
   color: var(--vp-c-text-3);
@@ -292,6 +331,11 @@ function randomPick() {
 
 .qb-count strong {
   color: var(--vp-c-text-1);
+}
+
+.qb-count-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .qb-list {
@@ -305,8 +349,34 @@ function randomPick() {
   border-top: 1px solid var(--vp-c-divider);
 }
 
+.qb-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.qb-toggle {
+  flex-shrink: 0;
+  padding: 2px 10px;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--vp-c-text-3);
+  background: transparent;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.qb-toggle:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
+}
+
 .qb-title {
   display: flex;
+  flex: 1;
+  min-width: 0;
   gap: 9px;
   font-size: 15px;
   font-weight: 500;
