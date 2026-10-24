@@ -20,51 +20,34 @@ npm run preview  # 预览构建结果
 
 因此 **`docs/index.md`、`.vitepress/data/` 是生成物，不要手改**，改 README 或脚本即可。
 
-## 部署到 Cloudflare Pages（推荐）
+## 部署到 GitHub Pages（当前方案）
 
-1. Cloudflare 控制台 → Workers & Pages → Create → Pages → Connect to Git；
-2. 选 `ramen1024/java-backend-interview-handbook`（私有仓库需授权一次，产物仍公开）；
-3. 构建配置：
-   - Framework preset：`None`
-   - Build command：`npm run build`
-   - Build output directory：`.vitepress/dist`
-   - 环境变量：`NODE_VERSION=22`
-4. 之后每次 push 到 `main` 自动重新构建；自定义域名在 Pages 的 Custom domains 里绑定，免备案。
+仓库已公开，站点地址：`https://ramen1024.github.io/java-backend-interview-handbook/`。
 
-`cleanUrls: true` 已开启，URL 形如 `/ch04-jvm`、`/questions`，Cloudflare Pages 默认支持。
+- 工作流：`.github/workflows/deploy.yml`，push 到 `main` 自动构建并部署，也可在 Actions 页手动触发。
+- 项目站点部署在 `/<repo>/` 子路径，工作流里通过 `DOCS_BASE` 注入 `base`；本地不设置时默认 `/`，所以本地预览地址仍是 `http://localhost:4173/`。
+- 首次部署需在仓库 Settings → Pages 把 Source 设为 **GitHub Actions**（已通过 API 设置，换仓库时要注意）。
+- `cleanUrls: true` 依赖 Pages 对 `/ch04-jvm` 映射到 `ch04-jvm.html`，GitHub Pages 支持；若哪天失效，去掉该项即可。
 
-## 备选：GitHub Pages
+### 本地复现 CI 构建
 
-私有仓库发布 Pages 需要付费账户（Pro 及以上），且站点必然公开。在仓库根目录加 `.github/workflows/deploy.yml`：
+Git Bash 会把 `/xxx/` 形式的环境变量当路径转换成 Windows 路径，必须关掉转换：
 
-```yaml
-name: deploy
-on:
-  push:
-    branches: [main]
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22 }
-      - run: npm ci
-      - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
-        with: { path: .vitepress/dist }
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/deploy-pages@v4
+```bash
+MSYS2_ENV_CONV_EXCL=DOCS_BASE DOCS_BASE=/java-backend-interview-handbook/ npm run build
 ```
 
-若部署在 `https://<user>.github.io/<repo>/` 这类子路径，需要在 `.vitepress/config.mts` 增加 `base: '/<repo>/'`，否则静态资源 404。
+CI 跑在 Ubuntu 上，没有这个问题。
+
+## 备选：Cloudflare Pages
+
+若之后想换国内访问更快的线路，Cloudflare 同样吃这个仓库：
+
+- Build command：`npm run build`
+- Build output directory：`.vitepress/dist`
+- 环境变量：`NODE_VERSION=22`，且**不要**设 `DOCS_BASE`（根路径部署）
+
+换到根路径部署时，记得移除或清空 `DOCS_BASE`，否则资源会去 `/java-backend-interview-handbook/assets/...` 找。
 
 ## 写作时的两个坑
 

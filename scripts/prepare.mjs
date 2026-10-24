@@ -135,7 +135,8 @@ function buildIndex() {
       console.warn(`[prepare] README 里的链接没有对应路由: ${file}`)
       return m
     }
-    return `](/${slug})`
+    // 用相对路径而非 /slug：GitHub Pages 部署在子路径下，相对链接会自动带上 base
+    return `](./${slug})`
   })
 
   const frontmatter = ['---', 'layout: doc', 'sidebar: false', 'outline: false', '---', ''].join('\n')

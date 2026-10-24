@@ -21,8 +21,15 @@ const rewrites = {
   '99-附录-答题话术与冲刺计划.md': 'appendix.md'
 }
 
+/**
+ * GitHub Pages 是项目站点，部署在 /<repo>/ 子路径下，构建时必须带上 base。
+ * 本地 dev / preview 走 '/'，由 CI 里的 DOCS_BASE 覆盖。
+ */
+const base = process.env.DOCS_BASE ?? '/'
+
 export default withMermaid(
   defineConfig({
+    base,
     lang: 'zh-CN',
     title: 'Java 后端面试系统化复习手册',
     description:
