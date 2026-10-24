@@ -78,3 +78,151 @@ div[class*='mermaid'] {
 .qb-note[open] > summary {
   margin-bottom: 8px;
 }
+
+/* 首页：数据卡 */
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 4px 0 36px;
+}
+
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+  background: var(--vp-c-bg-soft);
+  border-radius: 10px;
+}
+
+.home-stat-num {
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--vp-c-text-1);
+}
+
+.home-stat-label {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+/* 首屏快捷入口 */
+.home-quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 36px;
+}
+
+.home-quick-label {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.home-chip {
+  padding: 4px 12px;
+  font-size: 13px;
+  color: var(--vp-c-text-2);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 999px;
+  text-decoration: none !important;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.home-chip:hover {
+  color: var(--vp-c-brand-1);
+  border-color: var(--vp-c-brand-1);
+}
+
+/* 首页：章节卡片，替代原来的 15 行 × 6 列目录表 */
+.ch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0 12px;
+}
+
+.ch-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 10px;
+  text-decoration: none !important;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.ch-card:hover {
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-bg-soft);
+}
+
+.ch-card-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.ch-card-no {
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.ch-card-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--vp-c-text-1);
+}
+
+.ch-card:hover .ch-card-name {
+  color: var(--vp-c-brand-1);
+}
+
+.ch-card-desc {
+  flex: 1;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--vp-c-text-2);
+}
+
+.ch-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--vp-c-text-3);
+}
+
+.ch-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.ch-dot.is-top {
+  background: #e24b4a;
+}
+
+.ch-dot.is-high {
+  background: #ba7517;
+}
+
+.ch-dot.is-mid {
+  background: var(--vp-c-text-3);
+}
+
+@media (max-width: 640px) {
+  .home-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ch-grid {
+    grid-template-columns: 1fr;
+  }
+}
