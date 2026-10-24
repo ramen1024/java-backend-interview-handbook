@@ -22,6 +22,8 @@ const chapter = ref('all')
 const difficulty = ref('all')
 const priority = ref('all')
 const threshold = ref('all')
+/** 移动端把四行筛选项收进抽屉，首屏留给结果 */
+const filtersOpen = ref(false)
 
 const chapterOptions = computed(() => {
   const seen = new Map<string, string>()
@@ -52,6 +54,13 @@ const isFiltered = computed(
     difficulty.value !== 'all' ||
     priority.value !== 'all' ||
     threshold.value !== 'all'
+)
+
+/** 点开抽屉后要知道自己选了几项，否则筛选状态容易被忘掉 */
+const activeFilterCount = computed(
+  () =>
+    [chapter.value, difficulty.value, priority.value, threshold.value].filter((v) => v !== 'all')
+      .length
 )
 
 /** 答案默认收起：261 条全展开会把列表变成一堵墙，先让人扫题面 */
@@ -111,10 +120,19 @@ function randomPick() {
         placeholder="搜题目或答案，例如：MVCC、双亲委派、限流、CAS"
         aria-label="搜索题目"
       />
+      <button
+        class="qb-filter-toggle"
+        type="button"
+        :aria-expanded="filtersOpen"
+        @click="filtersOpen = !filtersOpen"
+      >
+        筛选
+        <span v-if="activeFilterCount" class="qb-badge">{{ activeFilterCount }}</span>
+      </button>
       <button class="qb-random" type="button" @click="randomPick">随机一题</button>
     </div>
 
-    <div class="qb-filters">
+    <div class="qb-filters" :class="{ open: filtersOpen }">
       <div class="qb-row">
         <span class="qb-label">章节</span>
         <select v-model="chapter" class="qb-select" aria-label="按章节筛选">
@@ -261,6 +279,32 @@ function randomPick() {
 .qb-random:hover,
 .qb-reset:hover {
   border-color: var(--vp-c-brand-1);
+}
+
+/* 筛选抽屉的开关，只在窄屏出现 */
+.qb-filter-toggle {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+  background: var(--vp-c-bg-soft);
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.qb-badge {
+  min-width: 16px;
+  padding: 0 4px;
+  font-size: 11px;
+  line-height: 16px;
+  text-align: center;
+  color: #fff;
+  background: var(--vp-c-brand-1);
+  border-radius: 8px;
 }
 
 .qb-reset {
@@ -473,5 +517,44 @@ function randomPick() {
   padding: 24px 0;
   font-size: 14px;
   color: var(--vp-c-text-3);
+}
+@media (max-width: 640px) {
+  .qb-filter-toggle {
+    display: inline-flex;
+  }
+
+  .qb-filters {
+    display: none;
+  }
+
+  .qb-filters.open {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+    margin-top: 12px;
+    background: var(--vp-c-bg-soft);
+    border-radius: 10px;
+  }
+
+  .qb-row {
+    justify-content: space-between;
+  }
+
+  .qb-select {
+    flex: 1;
+    margin-left: 8px;
+  }
+
+  .qb-toolbar {
+    gap: 8px;
+  }
+
+  .qb-random,
+  .qb-filter-toggle {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
 }
 </style>

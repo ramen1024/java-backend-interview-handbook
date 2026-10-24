@@ -56,3 +56,25 @@
 div[class*='mermaid'] {
   overflow-x: auto;
 }
+
+/* 题库页顶部的维度说明，默认收起，避免挤占首屏 */
+.qb-note {
+  margin: 16px 0 4px;
+  font-size: 14px;
+  color: var(--vp-c-text-2);
+}
+
+.qb-note > summary {
+  width: fit-content;
+  font-size: 13px;
+  color: var(--vp-c-text-3);
+  cursor: pointer;
+}
+
+.qb-note > summary:hover {
+  color: var(--vp-c-brand-1);
+}
+
+.qb-note[open] > summary {
+  margin-bottom: 8px;
+}
