@@ -1,6 +1,15 @@
 /* 侧边栏放宽一点：章节名较长，默认 272px 会换行 */
 :root {
   --vp-sidebar-width: 296px;
+  /* 复制成功后按钮左侧的提示文案，默认是英文 Copied */
+  --vp-code-copy-copied-text-content: '已复制';
+}
+
+/* 触屏设备没有 hover，复制按钮默认 opacity:0 等于不可用 */
+@media (hover: none) {
+  .vp-doc [class*='language-'] > button.copy {
+    opacity: 0.65;
+  }
 }
 
 /* 跳转锚点时不要被顶部导航遮住 */
