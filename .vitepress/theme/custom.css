@@ -18,6 +18,29 @@
   width: 26px;
 }
 
+/*
+ * 1200–1439（典型 2560×1600 安卓平板 = 1280 CSS 宽）：
+ * 大纲由 JS 判定切到顶部下拉，但右侧那一列是 CSS 控制的，必须显式隐藏；
+ * 顶部栏则被 ≥1280 的 display:none 藏掉，要重新显示——
+ * 这两条都被 VitePress 的 scoped 选择器（带 [data-v-xxx]）压着，只能用 !important。
+ * 下限取 1200 而不是 1280：桌面滚动条会吃掉十几像素，卡在 1280 上会漏掉边界设备。
+ */
+@media (min-width: 1200px) and (max-width: 1439px) {
+  .VPLocalNav {
+    display: block !important;
+  }
+
+  .VPDoc .aside {
+    display: none !important;
+  }
+
+  /* 大纲不再占右侧 256px，正文列宽从 688 放宽到 760（约 47 个汉字一行） */
+  .VPDoc.has-aside .content-container,
+  .VPDoc .content-container {
+    max-width: 760px !important;
+  }
+}
+
 /* 跳转锚点时不要被顶部导航遮住 */
 .vp-doc h2,
 .vp-doc h3 {

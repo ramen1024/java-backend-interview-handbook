@@ -58,7 +58,21 @@ export default withMermaid(
       ['meta', { property: 'og:url', content: SITE_URL }],
       ['meta', { property: 'og:image', content: `${SITE_URL}og.png` }],
       ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
-      ['meta', { name: 'twitter:image', content: `${SITE_URL}og.png` }]
+      ['meta', { name: 'twitter:image', content: `${SITE_URL}og.png` }],
+      /**
+       * 平板（1280 CSS 宽，如 2560×1600 的安卓板）会同时触发左侧栏 960 与右侧大纲 1280 两条线，
+       * 正文被挤到 660 出头。把「大纲常驻」这条判定推迟到 1440，1280 档改回顶部下拉。
+       * 必须在任何模块脚本之前执行，所以放 head 内联，且要早于 Vue 应用初始化。
+       */
+      [
+        'script',
+        {},
+        `(() => {
+  const orig = window.matchMedia.bind(window)
+  const map = { '(min-width: 1280px)': '(min-width: 1440px)' }
+  window.matchMedia = (q) => orig(map[q] || q)
+})()`
+      ]
     ],
     markdown: {
       lineNumbers: true,
